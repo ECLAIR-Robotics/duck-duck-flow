@@ -1,18 +1,22 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include <WiFi.h>
+#include <WebSocketsClient.h>
 
-// put function declarations here:
-int myFunction(int, int);
+// Wifi Credentials
+const String wifi_ssid = "wifi ssid";         // network name
+const String wifi_password = "wifi passowrd"; // network passowrd
+
+// Websocket Details
+const String websocket_server = "websocket server"; // ex: 192.---.-.---
+const int websocket_port = 8080;                    // websocket port
+const String websocket_path = "/ws";                // websocket path
+WebSocketsClient webSocket;
+
+
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }
