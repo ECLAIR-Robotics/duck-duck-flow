@@ -1,43 +1,17 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <WebSocketsClient.h>
+#include <ArduinoWebsockets.h>
 #include <WiFi.h>
 
 // Wifi Credentials
 const String wifi_ssid = "wifi ssid";         // network name
 const String wifi_password = "wifi passowrd"; // network passowrd
 
-// Websocket Details
-const String websocket_server = "websocket server"; // ex: 192.---.-.---
-const int websocket_port = 8080;                    // websocket port
-const String websocket_path = "/ws";                // websocket path
-WebSocketsClient webSocket;
-
-// websocket event
-// checks websocket status
-void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
-  switch (type) {
-  case WStype_CONNECTED:
-    Serial.println("[WebSocket] Connected");
-    break;
-  case WStype_DISCONNECTED:
-    Serial.println("[WebSocket] Disconnected");
-    break;
-  case WStype_TEXT:
-    Serial.printf("[WebSocket] Received text: %s\n", payload);
-    break;
-  default:
-    break;
-  }
-}
-
-// webSocket setup code
-// calls websocket event to post status on serial
-void setUpWebSocket() {
-  webSocket.begin(websocket_server, websocket_port, websocket_path);
-  webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(5000);
-}
+// Websocket data
+const String websocket_url =
+    "wss://duck-duck-flow.tanay-garg.workers.dev"; // url of websocket
+using namespace websockets;
+WebsocketsClient client; // define the websockets client
 
 // wifi setup code
 // outputs wifi setup status messages to serial
@@ -51,6 +25,42 @@ void setUpWifi() {
   Serial.println("connected!");
 }
 
+// setup the websocket
+void setUpWebSocket() {
+  // Setup WebSocket callbacks
+  client.onMessage([](WebsocketsMessage message) {
+    Serial.print("Received message: ");
+    Serial.println(message.data());
+  });
+
+  // check websocket event
+  client.onEvent([](WebsocketsEvent event, String data) {
+    if (event == WebsocketsEvent::ConnectionOpened) {
+      Serial.println("WebSocket connection opened");
+    } else if (event == WebsocketsEvent::ConnectionClosed) {
+      Serial.println("WebSocket connection closed");
+    } else if (event == WebsocketsEvent::GotPing) {
+      Serial.println("Received ping");
+    } else if (event == WebsocketsEvent::GotPong) {
+      Serial.println("Received pong");
+    }
+  });
+
+  // Connect to WebSocket server
+  Serial.println("Connecting to WebSocket server...");
+  bool connected = client.connect(websocket_url);
+
+  if (connected) {
+    Serial.println("WebSocket connected successfully!");
+
+    // Send a test message
+    client.send("Hello from ESP32!");
+
+  } else {
+    Serial.println("Failed to connect to WebSocket server");
+  }
+}
+
 void setup() {
   // setup serial
   Serial.begin(115200);
@@ -58,8 +68,47 @@ void setup() {
   // connect to wifi
   setUpWifi();
 
-  // setup the websocket
+  // setup websocket
   setUpWebSocket();
 }
 
-void loop() {}
+// makes sure device connected to websocket
+void heartBeat() {
+  // Keep the WebSocket connection alive
+  client.poll();
+
+  // Send periodic messages (optional)
+  static unsigned long lastSend = 0;
+  if (millis() - lastSend > 10000) { // Send every 10 seconds
+    if (client.available()) {
+      String message = "ESP32 heartbeat: " + String(millis());
+      client.send(message);
+      Serial.println("Sent: " + message);
+    }
+    lastSend = millis();
+  }
+}
+
+// handle disconection and reconnection
+void checkConnection() {
+  if (!client.available()) {
+    Serial.println("WebSocket disconnected, attempting to reconnect...");
+    delay(5000);
+
+    bool reconnected = client.connect(websocket_url);
+    if (reconnected) {
+      Serial.println("WebSocket reconnected successfully!");
+    } else {
+      Serial.println("Failed to reconnect to WebSocket server");
+    }
+  }
+
+  delay(100); // Small delay to prevent watchdog issues
+}
+
+void loop() {
+  // baseline funny connection infastructure stuffs
+  // dont mess with this cuz everything will die!!!
+  heartBeat();
+  checkConnection();
+}
