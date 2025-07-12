@@ -8,8 +8,7 @@ const String wifi_ssid = "wifi ssid";         // network name
 const String wifi_password = "wifi passowrd"; // network passowrd
 
 // Websocket data
-const String websocket_url =
-    "wss://duck-duck-flow.tanay-garg.workers.dev"; // url of websocket
+const String websocket_url = "wss://duck-duck-flow.tanay-garg.workers.dev"; // url of websocket
 using namespace websockets;
 WebsocketsClient client; // define the websockets client
 
