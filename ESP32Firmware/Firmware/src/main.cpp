@@ -26,6 +26,7 @@ void setUpWifi() {
 }
 
 // setup the websocket
+// output websocket status to serial
 void setUpWebSocket() {
   // Setup WebSocket callbacks
   client.onMessage([](WebsocketsMessage message) {
@@ -73,6 +74,7 @@ void setup() {
 }
 
 // makes sure device connected to websocket
+// prints confirmation websocket setup is connected / alive
 void heartBeat() {
   // Keep the WebSocket connection alive
   client.poll();
@@ -90,6 +92,7 @@ void heartBeat() {
 }
 
 // handle disconection and reconnection
+// prints if need to reconnect and reconnection status
 void checkConnection() {
   if (!client.available()) {
     Serial.println("WebSocket disconnected, attempting to reconnect...");
@@ -108,7 +111,6 @@ void checkConnection() {
 
 void loop() {
   // baseline funny connection infastructure stuffs
-  // dont mess with this cuz everything will die!!!
   heartBeat();
   checkConnection();
 }
