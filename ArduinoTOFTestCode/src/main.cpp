@@ -2,6 +2,8 @@
 Code modified from https://docs.sunfounder.com/projects/umsk/en/latest/02_arduino/uno_lesson21_vl53l0x.html
 
 Verdict:: this sensor is really precise on solid objetc but only up to roughly a meter
+          Works extremely poorly on clear water but to some extent on cloudy water when tested indoors with turmeric to dirty the water
+
 */
 
 #include <Arduino.h>
