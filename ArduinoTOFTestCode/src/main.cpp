@@ -1,5 +1,7 @@
 /*
 Code modified from https://docs.sunfounder.com/projects/umsk/en/latest/02_arduino/uno_lesson21_vl53l0x.html
+
+Verdict:: this sensor is really precise on solid objetc but only up to roughly a meter
 */
 
 #include <Arduino.h>
@@ -9,7 +11,7 @@ Code modified from https://docs.sunfounder.com/projects/umsk/en/latest/02_arduin
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // wait until serial port opens for native USB devices
   while (!Serial) {
