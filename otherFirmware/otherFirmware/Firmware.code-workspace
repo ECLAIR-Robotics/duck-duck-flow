@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../ESP32Firmware/Firmware"
+		},
+		{
+			"name": "otherFirmware",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
