@@ -11,32 +11,124 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import './types';
+import { render } from './client/entry-server';
 
-// ! all this is untested code
-async function handleRequest(request: any) {
-	const upgradeHeader = request.headers.get("Upgrade");	
-	if (!upgradeHeader || upgradeHeader.toLowerCase() !== "websocket") {
-		return new Response("Expected websocket", { status: 426 });
-	}
-
-	const webSocketPair = new WebSocketPair();
-	const [client, server] = Object.values(webSocketPair);
-
-	server.accept(); // Accept the server WebSocket and Keep connection alive
-	server.addEventListener('message', (event) => {
-		console.log("Message from client:", event.data);
-		server.send(`Hello from server! You said: ${event.data}`);
-	});
-
-	return new Response(null, {
-		status: 101,
-		webSocket: client,
-	});
-
-}
+	
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return handleRequest(request);
+	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+		const url = new URL(request.url);
+		const path = url.pathname;
+
+		// Handle POST requests to /log endpoint
+		if (path === '/log' && request.method === 'POST') {
+			try {
+				const body = await request.text();
+				console.log('Received log data:', body);
+				
+				// Optional: Store in D1 database if needed
+				// You can uncomment and modify this section to store logs in D1
+				try {
+					await env.flow_records.prepare(
+						"INSERT INTO sensor_data (water_height, latitude, longitude, timestamp, sensor_altitude, comment, sensor_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+					).bind(
+						JSON.parse(body).water_height,
+						JSON.parse(body).latitude,
+						JSON.parse(body).longitude,
+						JSON.parse(body).timestamp,
+						JSON.parse(body).sensor_altitude,
+						JSON.parse(body).comment,
+						JSON.parse(body).sensor_id
+					).run();
+				} catch (dbError) {
+					console.error('Database error:', dbError);
+				}
+
+				return new Response(JSON.stringify({ 
+					success: true, 
+					message: 'Log received successfully',
+					timestamp: new Date().toISOString()
+				}), {
+					status: 200,
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': '*',
+						'Access-Control-Allow-Methods': 'POST, OPTIONS',
+						'Access-Control-Allow-Headers': 'Content-Type',
+					},
+				});
+			} catch (error) {
+				console.error('Error processing log:', error);
+				return new Response(JSON.stringify({ 
+					success: false, 
+					error: 'Failed to process log data' 
+				}), {
+					status: 500,
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': '*',
+					},
+				});
+			}
+		}
+
+		// Handle CORS preflight requests
+		if (request.method === 'OPTIONS') {
+			return new Response(null, {
+				status: 200,
+				headers: {
+					'Access-Control-Allow-Origin': '*',
+					'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+					'Access-Control-Allow-Headers': 'Content-Type',
+				},
+			});
+		}
+
+		// Serve the Vite app for all other requests (including '/')
+		try {
+			// Try to serve from static assets first (production)
+			if (env.ASSETS) {
+				try {
+					const asset = await env.ASSETS.fetch(request);
+					if (asset.status !== 404) {
+						return asset;
+					}
+				} catch (assetError) {
+					console.log('Asset serving failed, falling back to inline HTML');
+				}
+			}
+
+			// Fallback to SSR rendered React app
+			try {
+				const { html } = render();
+				const htmlContent = `<!DOCTYPE html>
+				<html lang="en">
+					<div id="root">${html}</div>
+				</html>`;
+				return new Response(htmlContent, {
+					headers: {
+						'Content-Type': 'text/html',
+						'Access-Control-Allow-Origin': '*',
+					},
+				});
+			} catch (ssrError) {
+				console.error('SSR failed, falling back to basic HTML:', ssrError);
+				// Fallback to basic HTML if SSR fails
+				const basicHtml = `<!DOCTYPE html>
+				<html lang="en">
+				Sorry we ran into an error
+				</html>`;
+				return new Response(basicHtml, {
+					headers: {
+						'Content-Type': 'text/html',
+						'Access-Control-Allow-Origin': '*',
+					},
+				});
+			}
+		} catch (error) {
+			console.error('Error serving app:', error);
+			return new Response('Internal Server Error', { status: 500 });
+		}
 	},
 } satisfies ExportedHandler<Env>;
