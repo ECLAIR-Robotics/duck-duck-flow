@@ -1,115 +1,64 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <ArduinoWebsockets.h>
 #include <WiFi.h>
+#include <ESP32Ping.h>
+#include <HTTPClient.h>
 
-// Wifi Credentials
-const String wifi_ssid = "wifi ssid";         // network name
-const String wifi_password = "wifi passowrd"; // network passowrd
+const char* ssid = "utexas-iot";
+const char* password = "90638287949629994713";
+const IPAddress remote_ip(173, 194, 208, 139); // Google's public DNS server
+int port = 80; // HTTP port
 
-// Websocket data
-const String websocket_url = "wss://duck-duck-flow.tanay-garg.workers.dev"; // url of websocket
-using namespace websockets;
-WebsocketsClient client; // define the websockets client
+WiFiClient client = WiFiClient();
 
-// wifi setup code
-// outputs wifi setup status messages to serial
-void setUpWifi() {
-  WiFi.begin(wifi_ssid, wifi_password);
-  Serial.println("connecting to wifi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("connected!");
-}
+void setup(){
+    Serial.begin(115200);
+    Serial.print("\nDefault ESP32 MAC Address: ");
+    Serial.println(WiFi.macAddress());
+    WiFi.begin(ssid, password);
+    
 
-// setup the websocket
-// output websocket status to serial
-void setUpWebSocket() {
-  // Setup WebSocket callbacks
-  client.onMessage([](WebsocketsMessage message) {
-    Serial.print("Received message: ");
-    Serial.println(message.data());
-  });
-
-  // check websocket event
-  client.onEvent([](WebsocketsEvent event, String data) {
-    if (event == WebsocketsEvent::ConnectionOpened) {
-      Serial.println("WebSocket connection opened");
-    } else if (event == WebsocketsEvent::ConnectionClosed) {
-      Serial.println("WebSocket connection closed");
-    } else if (event == WebsocketsEvent::GotPing) {
-      Serial.println("Received ping");
-    } else if (event == WebsocketsEvent::GotPong) {
-      Serial.println("Received pong");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.print(".");
     }
-  });
 
-  // Connect to WebSocket server
-  Serial.println("Connecting to WebSocket server...");
-  bool connected = client.connect(websocket_url);
+    Serial.println("\nConnected to WiFi network");
+    Serial.print("ESP32 IP Address: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("ESP32 MAC Address: ");
+    Serial.println(WiFi.macAddress());
+    Serial.print("ESP32 Hostname: ");
+    Serial.println(WiFi.getHostname());
 
-  if (connected) {
-    Serial.println("WebSocket connected successfully!");
-
-    // Send a test message
-    client.send("Hello from ESP32!");
-
-  } else {
-    Serial.println("Failed to connect to WebSocket server");
-  }
-}
-
-void setup() {
-  // setup serial
-  Serial.begin(115200);
-
-  // connect to wifi
-  setUpWifi();
-
-  // setup websocket
-  setUpWebSocket();
-}
-
-// makes sure device connected to websocket
-// prints confirmation websocket setup is connected / alive
-void heartBeat() {
-  // Keep the WebSocket connection alive
-  client.poll();
-
-  // Send periodic messages (optional)
-  static unsigned long lastSend = 0;
-  if (millis() - lastSend > 10000) { // Send every 10 seconds
-    if (client.available()) {
-      String message = "ESP32 heartbeat: " + String(millis());
-      client.send(message);
-      Serial.println("Sent: " + message);
-    }
-    lastSend = millis();
-  }
-}
-
-// handle disconection and reconnection
-// prints if need to reconnect and reconnection status
-void checkConnection() {
-  if (!client.available()) {
-    Serial.println("WebSocket disconnected, attempting to reconnect...");
-    delay(5000);
-
-    bool reconnected = client.connect(websocket_url);
-    if (reconnected) {
-      Serial.println("WebSocket reconnected successfully!");
+    // Ping google.com to check connectivity
+    if (Ping.ping(remote_ip)) {
+        Serial.println("Successfully pinged remote IP: " + remote_ip.toString());
     } else {
-      Serial.println("Failed to reconnect to WebSocket server");
+        Serial.println("Ping failed");
     }
-  }
 
-  delay(100); // Small delay to prevent watchdog issues
+    // HTTP POST request example
+    HttpClient http(client);
+
+    // send a get request to https://reqbin.com/echo/get/json
+    char hostname[] = "reqbin.com";
+    IPAddress ip = IPAddress(0, 0, 0, 0);
+    WiFi.hostByName(hostname, ip);
+    Serial.println("Resolved hostname: " + String(hostname) + " to IP: " + ip.toString());
+    http.get(ip, NULL, "/echo/get/json", NULL);
+
+    if (http.responseStatusCode() == 200) {
+        Serial.println("HTTP GET request successful");
+        char response[512];
+        http.readBytes(response, sizeof(response) - 1);
+        response[sizeof(response) - 1] = '\0'; // Null-terminate the string
+        Serial.println("Response: " + String(response));
+    } else {
+        Serial.println("HTTP GET request failed with status code: " + String(http.responseStatusCode()));
+    }
+
+
 }
-
-void loop() {
-  // baseline funny connection infastructure stuffs
-  heartBeat();
-  checkConnection();
+ 
+void loop(){
+  // Do Nothing
 }
