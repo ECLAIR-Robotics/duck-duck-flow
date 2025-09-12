@@ -22,7 +22,7 @@ export default {
 		const path = url.pathname;
 
 		// Handle POST requests to /log endpoint
-		if (path === '/log' && request.method === 'POST') {
+		if (path === '/api/log' && request.method === 'POST') {
 			try {
 				const body = await request.text();
 				console.log('Received log data:', body);
@@ -49,6 +49,53 @@ export default {
 					success: true, 
 					message: 'Log received successfully',
 					timestamp: new Date().toISOString()
+				}), {
+					status: 200,
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': '*',
+						'Access-Control-Allow-Methods': 'POST, OPTIONS',
+						'Access-Control-Allow-Headers': 'Content-Type',
+					},
+				});
+			} catch (error) {
+				console.error('Error processing log:', error);
+				return new Response(JSON.stringify({ 
+					success: false, 
+					error: 'Failed to process log data' 
+				}), {
+					status: 500,
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': '*',
+					},
+				});
+			}
+		}
+
+		// Handle GET request to /data endpoint
+		if (path === '/api/data' && request.method === 'GET') {
+			try {
+				const body = await request.text();
+				console.log("/data endpoint");
+				
+				// Optional: Store in D1 database if needed
+				// You can uncomment and modify this section to store logs in D1
+				let res: D1Result | undefined;
+				try {
+					res = await env.flow_records.prepare("SELECT * FROM sensor_data").run();
+					console.log(JSON.stringify(res.results));
+				} catch (dbError) {
+					console.error('Database error:', dbError);
+					res = undefined;
+				}
+				console.log(JSON.stringify(res?.results));
+
+				return new Response(JSON.stringify({ 
+					success: true, 
+					message: 'Log received successfully',
+					timestamp: new Date().toISOString(),
+					body: res?.results,
 				}), {
 					status: 200,
 					headers: {

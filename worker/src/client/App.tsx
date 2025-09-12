@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ApiResponse, SensorData } from '../types';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [data, setData] = useState<SensorData[] | undefined>();
 
   const testLog = async () => {
     setIsLoading(true);
     setMessage('');
     
     try {
-      const response = await fetch('/log', {
+      const response = await fetch('/api/log', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,6 +42,26 @@ const App: React.FC = () => {
     }
   };
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    fetch('/api/data', {
+      method: 'GET',
+    })
+    .then((res: Response): Promise<ApiResponse<SensorData[]>> => res.json())
+    .then((json: ApiResponse<SensorData[]>) => {
+      const { body } = json;
+      setData(body);
+    }).catch((err) => {
+      console.log(`Error fetching data: ${err}`)
+      setMessage('❌ Error fetching data')
+    })
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
   return (
     <div className="container">
       <div className="emoji">🦆</div>
@@ -53,6 +75,30 @@ const App: React.FC = () => {
         {isLoading ? 'Sending...' : 'Test Log Endpoint'}
 
       </button>
+      <button 
+        className="button" 
+        onClick={fetchData}
+        disabled={isLoading}
+      >
+        {isLoading ? 'Fetching...' : 'Fetch Data'}
+      </button>
+      {data && 
+      (<table>
+        <thead>
+          <tr>
+            <th scope='col'>id</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((datapoint) => {
+            return (
+            <tr>
+              <td scope='row'>{datapoint.id}</td>
+            </tr>
+            )
+          })}
+        </tbody>
+      </table>)}
       {message && (
         <div className="message">
           {message}
