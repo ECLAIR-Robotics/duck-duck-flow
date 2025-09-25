@@ -4,6 +4,10 @@ type DataTableProps = {
     data: SensorData[];
 }
 
+const readableDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleString("en");
+}
+
 const DataTable = (props: DataTableProps) => {
     return (
         <table>
@@ -21,7 +25,7 @@ const DataTable = (props: DataTableProps) => {
             <tr>
               <td scope='row'>{datapoint.sensor_id}</td>
               <td>{datapoint.water_height}</td>
-              <td>{datapoint.timestamp}</td>
+              <td>{readableDate(datapoint.timestamp)}</td>
               <td>{datapoint.comment}</td>
             </tr>
             )
