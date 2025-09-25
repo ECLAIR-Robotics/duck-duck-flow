@@ -77,31 +77,19 @@ export default {
 		if (path === '/api/data' && request.method === 'GET') {
 			try {
 				const body = await request.text();
-				console.log("/data endpoint");
-				
-				// Optional: Store in D1 database if needed
-				// You can uncomment and modify this section to store logs in D1
-				let res: D1Result | undefined;
-				try {
-					res = await env.flow_records.prepare("SELECT * FROM sensor_data").run();
-					console.log(JSON.stringify(res.results));
-				} catch (dbError) {
-					console.error('Database error:', dbError);
-					res = undefined;
-				}
-				console.log(JSON.stringify(res?.results));
+				const dataQueryResult: D1Result | undefined = await env.flow_records.prepare("SELECT * FROM sensor_data ORDER BY datetime(timestamp) DESC LIMIT 10").run();
 
 				return new Response(JSON.stringify({ 
 					success: true, 
-					message: 'Log received successfully',
-					timestamp: new Date().toISOString(),
-					body: res?.results,
+					message: 'Data fetched successfully',
+					// timestamp: new Date().toISOString(),
+					body: dataQueryResult?.results,
 				}), {
 					status: 200,
 					headers: {
 						'Content-Type': 'application/json',
 						'Access-Control-Allow-Origin': '*',
-						'Access-Control-Allow-Methods': 'POST, OPTIONS',
+						'Access-Control-Allow-Methods': 'GET, OPTIONS',
 						'Access-Control-Allow-Headers': 'Content-Type',
 					},
 				});
@@ -109,7 +97,7 @@ export default {
 				console.error('Error processing log:', error);
 				return new Response(JSON.stringify({ 
 					success: false, 
-					error: 'Failed to process log data' 
+					error: 'Failed to fetch sensor data' 
 				}), {
 					status: 500,
 					headers: {

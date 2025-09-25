@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ApiResponse, SensorData } from '../types';
+import DataTable from '../components/DataTable';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +66,7 @@ const App: React.FC = () => {
   return (
     <div className="container">
       <div className="emoji">🦆</div>
-      <h1>Hello World!</h1>
+      <h1>Duck Duck Flow</h1>
       <p>Welcome to Duck Duck Floor - a React app with SSR powered by Cloudflare Workers!</p>
       <button 
         className="button" 
@@ -82,23 +83,7 @@ const App: React.FC = () => {
       >
         {isLoading ? 'Fetching...' : 'Fetch Data'}
       </button>
-      {data && 
-      (<table>
-        <thead>
-          <tr>
-            <th scope='col'>id</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((datapoint) => {
-            return (
-            <tr>
-              <td scope='row'>{datapoint.id}</td>
-            </tr>
-            )
-          })}
-        </tbody>
-      </table>)}
+      {data && <DataTable data={data} />}
       {message && (
         <div className="message">
           {message}
