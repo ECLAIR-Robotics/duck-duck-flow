@@ -5,6 +5,7 @@
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
+		"devb": "vite build && wrangler dev",
 		"start": "wrangler dev",
 		"build": "vite build",
 		"test": "vitest",
@@ -14,17 +15,20 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
+		"leaflet": "^1.9.4",
+		"react": "19.0.0",
+		"react-dom": "19.0.0",
+		"react-leaflet": "^5.0.0-rc.2"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@types/leaflet": "^1.9.20",
 		"@types/react": "^18.2.0",
 		"@types/react-dom": "^18.2.0",
 		"@vitejs/plugin-react": "^4.0.0",
 		"typescript": "^5.5.2",
+		"vite": "^5.0.0",
 		"vitest": "~3.2.0",
-		"wrangler": "^4.24.3",
-		"vite": "^5.0.0"
+		"wrangler": "^4.24.3"
 	}
 }

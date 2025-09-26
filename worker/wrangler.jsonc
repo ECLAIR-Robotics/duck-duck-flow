@@ -18,6 +18,13 @@
 			"database_id": "16db8b77-d125-4ef1-a179-05a3dfa158d5"
 		}
 	],
+	"rules": [
+		{
+			"type": "Data",
+			"globs": ["**/*.png"],
+			"fallthrough": true,
+		}
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

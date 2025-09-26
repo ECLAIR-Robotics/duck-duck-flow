@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ApiResponse, SensorData } from '../types';
 import DataTable from '../components/DataTable';
+import Map from '../components/map/Map.lazy';
+import LoadableMap from '../components/map/Map.lazy';
+import { Coordinate } from '../components/map/types';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +92,12 @@ const App: React.FC = () => {
           {message}
         </div>
       )}
+      <LoadableMap coords={data?.map((sensorData: SensorData): Coordinate => {
+        return {
+          longitude: sensorData.longitude,
+          latitude: sensorData.latitude,
+        }
+      })} />
     </div>
   );
 };
