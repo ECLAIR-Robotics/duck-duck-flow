@@ -1,6 +1,5 @@
 import { MapContainer, Marker, TileLayer } from "react-leaflet"
 import { MapProps } from "./types";
-import 'leaflet/dist/leaflet.css'
 
 // TODO fix image loading
 const Map = (props: MapProps) => {
