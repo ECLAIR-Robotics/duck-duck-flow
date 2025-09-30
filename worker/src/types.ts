@@ -8,8 +8,8 @@ declare global {
 
 export type ApiResponse<T> = {
   success: boolean;
-  message: String;
-  timestamp: String;
+  message: string;
+  timestamp: string;
   body?: T;
 }
 
@@ -19,8 +19,8 @@ export type SensorData = {
   latitude: number;
   longitude: number;
   sensor_altitude: number;
-  timestamp: String;
-  comment: String;
+  timestamp: string;
+  comment: string;
   sensor_id: number;
 }
 
