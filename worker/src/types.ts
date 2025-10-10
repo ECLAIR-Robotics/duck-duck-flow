@@ -23,5 +23,3 @@ export type SensorData = {
   comment: string;
   sensor_id: number;
 }
-
-export {};

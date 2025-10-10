@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ApiResponse, SensorData } from '../types';
 import DataTable from '../components/DataTable';
+import { SensorLocation } from '../components/map/types';
+import SSRMap from '../components/map/Maps.lazy';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +91,15 @@ const App: React.FC = () => {
           {message}
         </div>
       )}
+      <SSRMap sensors={data?.map((sensorData: SensorData): SensorLocation => {
+        return {
+          sensor_id: sensorData.sensor_id,
+          coordinates: {
+            longitude: sensorData.longitude,
+            latitude: sensorData.latitude,
+          },
+        }
+      })} />
     </div>
   );
 };
