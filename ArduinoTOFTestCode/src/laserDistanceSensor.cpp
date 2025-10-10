@@ -6,6 +6,8 @@ Verdict:: this sensor is really precise on solid objetc but only up to roughly a
 
 */
 
+// this code is for a DIFFERENT sensor than we actually have
+
 #include <Arduino.h>
 #include <Adafruit_VL53L0X.h>
 
