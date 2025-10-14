@@ -11,7 +11,7 @@ WiFiClient client = WiFiClient();
 
 void setup(){
     Serial.begin(115200);
-    Serial.print("\nDefault ESP32 MAC Address: ");
+    Serial.print("\nowDefault ESP32 MAC Address: ");
     Serial.println(WiFi.macAddress());
     WiFi.begin(ssid, password);
     
