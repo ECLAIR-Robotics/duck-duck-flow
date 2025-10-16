@@ -30,13 +30,17 @@ export default {
 				// Optional: Store in D1 database if needed
 				// You can uncomment and modify this section to store logs in D1
 				try {
+					var timestampval = JSON.parse(body).timestamp;
+					if (timestampval == "fix") {
+						timestampval = new Date().toISOString()
+					}
 					await env.flow_records.prepare(
 						"INSERT INTO sensor_data (water_height, latitude, longitude, timestamp, sensor_altitude, comment, sensor_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
 					).bind(
 						JSON.parse(body).water_height,
 						JSON.parse(body).latitude,
 						JSON.parse(body).longitude,
-						JSON.parse(body).timestamp,
+						timestampval,
 						JSON.parse(body).sensor_altitude,
 						JSON.parse(body).comment,
 						JSON.parse(body).sensor_id

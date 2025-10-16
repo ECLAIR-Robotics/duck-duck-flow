@@ -69,7 +69,7 @@ const App: React.FC = () => {
     <div className="container">
       <div className="emoji">🦆</div>
       <h1>Duck Duck Flow</h1>
-      <p>Welcome to Duck Duck Floor - a React app with SSR powered by Cloudflare Workers!</p>
+      <p>Welcome to Duck Duck Flow - a React app with SSR powered by Cloudflare Workers!</p>
       <button 
         className="button" 
         onClick={testLog}
