@@ -1,0 +1,14 @@
+/* 
+  WifiConnection.h
+  Passwords and network name for connecting to wifi
+  This is an example of what your WifiConnection.h file should look like 
+  DO NOT PUSH WifiConnection.h TO GITHUB. add to your .gitignore file
+  */
+  
+#ifndef WifiConnection_h
+#define WifiConnection_h
+
+#define WIFI_NAME "name"
+#define WIFI_PASSWORD "123"
+
+#endif
