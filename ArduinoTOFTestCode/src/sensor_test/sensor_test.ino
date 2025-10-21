@@ -1,5 +1,3 @@
-#include <Arduino_JSON.h>
-
 // sensor_test.ino debug version
 // 10-20-2025
 // test program for ultrasonic sensor to print out values. originally compiled and run in arduino IDE
@@ -7,7 +5,11 @@
  * The ultrasonicsensor will take an average of distance measurements in cm 
  * over 30 seconds (see LOOP_LIMIT), then send the data to the DuckDuckFlow 
  * testing database.
-*/
+ */
+
+#define DEBUG 1 // TODO resume here
+
+#include <Arduino_JSON.h>
 #include <SoftwareSerial.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -102,7 +104,14 @@ void loop() {
     sprintf(isoTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
             year(), month(), day(), hour(), minute(), second());
   
-    attemptSendData(isoTime);
+    // TODO resume here next time!
+    if (DEBUG) {
+      Serial.print(isoTime);
+      Serial.print(" ");
+      Serial.println(distanceInCm);
+    } else {
+      attemptSendData(isoTime);
+    }
   }
 
   delay(SENSOR_DELAY);  // MUST wait before taking another measurement
