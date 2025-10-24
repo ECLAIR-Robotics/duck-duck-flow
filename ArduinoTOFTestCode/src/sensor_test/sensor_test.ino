@@ -7,7 +7,8 @@
  * testing database.
  */
 
-#define DEBUG 1 // TODO resume here
+#define DEBUG 1  // print out debug statements
+#define DONT_SEND_DATA 0 // whether data should be sent to the database
 
 #include <Arduino_JSON.h>
 #include <SoftwareSerial.h>
@@ -28,7 +29,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000); // UTC time, update ever
 
 // loop variables
 #define SENSOR_DELAY 150      // don't make it too high or the sensor won't work
-#define LOOP_LIMIT 10 // 30         // the number of loops to take the measurement average over. LOOP_LIMIT * SENSOR_DELAY should be around 30,000 = 30 seconds
+#define LOOP_LIMIT 30         // the number of loops to take the measurement average over. LOOP_LIMIT * SENSOR_DELAY should be around 30,000 = 30 seconds
 static int iterCount = 0;     // which iteration of the loop we're on, will be reset after sending data
 static int goodIterCount = 0;     // number of successful runs, for taking average
 static float runningSum = 0;  // running sum, divide by LOOP_LIMIT to get average
@@ -49,14 +50,22 @@ void setup() {
   mySerial.begin(9600);   // match ESP8266's baud rate
   Serial.begin(9600);     // match ESP8266's baud rate
 
-  delay(10);
-  Serial.println('\n');
+  delay(5000);
+  // print constants
+  if (DEBUG) {
+    Serial.println("DEBUG mode is ON!");
+  } else {
+    Serial.println("Debug mode is off");
+  }
+  if (DONT_SEND_DATA) {
+    Serial.println("DONT_SEND_DATA is TRUE. Data will NOT be sent to the database!");
+  }
 
   // Connect to network
   WiFi.begin(ssid, password);
   Serial.print("Connecting to ");
   Serial.print(ssid);
-  Serial.println("...");
+  Serial.println("Waiting...");
 
   // wait to connect to network.
   int i = 0;
@@ -67,10 +76,10 @@ void setup() {
   }
   
   // successfully connected
-  Serial.println('\n');
+  Serial.println();
   Serial.println("Connection established!");
   Serial.print("IP address:\t");
-  Serial.print(WiFi.localIP());
+  Serial.println(WiFi.localIP());
 
   // setup time
   timeClient.begin();
@@ -91,32 +100,38 @@ void loop() {
   }
 
   // Take measurement
-  float distanceInCm = getDistance(); // your measurement function
+  float distancetoSend = getDistance(); // your measurement function
 
   // check for errors
-  if (distanceInCm > 0) {
+  if (distancetoSend > 0) {
     // update variables for average
-    runningSum += distanceInCm;
+    runningSum += distancetoSend;
     ++goodIterCount;
+
+    // this block generates TOO many prints - keep for later just in case
+    // Serial.print("running sum += ");
+    // Serial.print(distancetoSend);
+    // Serial.print(" = ");
+    // Serial.print(runningSum);
+    // Serial.print(". number of valid mesurements =");
+    // Serial.print(goodIterCount);
   
     // Get timestamp
     char isoTime[25];
     sprintf(isoTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
             year(), month(), day(), hour(), minute(), second());
   
-    // TODO resume here next time!
-    if (DEBUG) {
-      Serial.print(isoTime);
-      Serial.print(" ");
-      Serial.println(distanceInCm);
-    } else {
-      attemptSendData(isoTime);
-    }
+    // Send data if certain conditions are met
+    attemptSendData(isoTime);
   }
 
   delay(SENSOR_DELAY);  // MUST wait before taking another measurement
 }
 
+/* returns the current distance in cm */
+float distanceInCm() {
+  return distance / 10;
+}
 
 /** reads data from sensor and returns the distance in cm. 
  * must have a delay between readings */
@@ -140,14 +155,17 @@ float getDistance() {
       // check below lower limit (too close)
       distance = (data[1]<<8)+data[2];
       if(distance > 280) {
-        return distance / 10;
+        return distanceInCm();
       } else {
         Serial.println("Below the lower limit");         
       }
     } else Serial.println("ERROR: checksum failed");
   } // else { Serial.println("no data"); }
-  // Serial.println("read: ");
-  // Serial.println(distance); // todo delete
+
+  // if (DEBUG) {
+  //   Serial.print("getDistance returning result=");
+  //   Serial.println(result);
+  // }
   return result;
 }
 
@@ -157,6 +175,18 @@ void attemptSendData(String isotimestamp) {
   if (!canSend && ++iterCount > LOOP_LIMIT) {
     canSend = true; 
     Serial.println("Reached required loops, can send data now!");
+  } else if (iterCount % 10 == 0) {
+    // this most recent measurement
+    Serial.print("just measured ");
+    Serial.print(distanceInCm());
+    Serial.print("cm at ");
+    Serial.println(isotimestamp);
+
+    Serial.print("taken ");
+    Serial.print(iterCount);
+    Serial.print("/");
+    Serial.print(LOOP_LIMIT);
+    Serial.println(" measurements until next send");
   }
 
   if (canSend) {
@@ -165,6 +195,7 @@ void attemptSendData(String isotimestamp) {
     // reset average variables
     canSend = false; // reset can send flag
     iterCount = 0; // reset iterCount
+    goodIterCount = 0;
     runningSum = 0.0; //reset
   }
 }
@@ -187,29 +218,38 @@ void sendData(String isotimestamp) {
     
     // Serialize to JSON string
     String jsonString = JSON.stringify(myData);
-    Serial.println("NOT ACTUALLY SENDING JSON:");
-    Serial.println(jsonString);
-    
-    // // Your Domain name with URL path or IP address with path
-    // https.begin(*client, "https://tanayhome.org/api/log");
-    // https.addHeader("Content-Type", "application/json");
-      
-    // // Send HTTP POST request
-    // int httpResponseCode = https.POST(jsonString);
-    
-    // if (httpResponseCode > 0) {
-    //   Serial.print("HTTP Response code: ");
-    //   Serial.println(httpResponseCode);
-    //   String payload = https.getString();
-    //   Serial.println(payload);
-    // }
-    // else {
-    //   Serial.print("Error code: ");
-    //   Serial.println(httpResponseCode);
-    // }
-    // // Free resources
-    // https.end();
 
+    if (DONT_SEND_DATA) {
+      Serial.println("NOT ACTUALLY SENDING JSON:");
+      Serial.println(jsonString);
+    } else {
+      // setup connection
+      auto client = std::make_unique<BearSSL::WiFiClientSecure>();
+      client->setInsecure();
+      HTTPClient https;
+
+      // send data
+      https.begin(*client, "https://tanayhome.org/api/log");
+      https.addHeader("Content-Type", "application/json");
+      
+      // Send HTTP POST request
+      Serial.println("Sending data:");
+      Serial.println(jsonString);
+      int httpResponseCode = https.POST(jsonString);
+      
+      if (httpResponseCode > 0) {
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+        String payload = https.getString();
+        Serial.println(payload);
+      }
+      else {
+        Serial.print("Error code: ");
+        Serial.println(httpResponseCode);
+      }
+      // Free resources
+      https.end();
+    }
     
   } else {
     Serial.println("WiFi Disconnected");
