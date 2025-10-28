@@ -7,8 +7,9 @@
  * testing database.
  */
 
-#define DEBUG 1  // print out debug statements
-#define DONT_SEND_DATA 0 // whether data should be sent to the database
+#define DEBUG 0  // print out debug statements
+#define DONT_SEND_DATA 1 // whether data should be sent to the database
+#define PRINT_EVERY_MEASUREMENT 1 // whether to print every sucessful measurement (in cm)
 
 #include <Arduino_JSON.h>
 #include <SoftwareSerial.h>
@@ -114,7 +115,14 @@ void loop() {
     // Serial.print(" = ");
     // Serial.print(runningSum);
     // Serial.print(". number of valid mesurements =");
-    // Serial.print(goodIterCount);
+    // Serial.println(goodIterCount);
+
+    if (PRINT_EVERY_MEASUREMENT) {
+      Serial.print("Height: ");
+      Serial.print(distancetoSend);
+      Serial.println("cm");
+    }
+
   
     // Get timestamp
     char isoTime[25];
@@ -174,19 +182,22 @@ void attemptSendData(String isotimestamp) {
   // send data every LOOP_LIMIT iterations. have a flag since the next few loops might fail.
   if (!canSend && ++iterCount > LOOP_LIMIT) {
     canSend = true; 
-    Serial.println("Reached required loops, can send data now!");
+    if (DEBUG)
+      Serial.println("Reached required loops, can send data now!");
   } else if (iterCount % 10 == 0) {
     // this most recent measurement
-    Serial.print("just measured ");
-    Serial.print(distanceInCm());
-    Serial.print("cm at ");
-    Serial.println(isotimestamp);
+    if (DEBUG) {
+      Serial.print("just measured ");
+      Serial.print(distanceInCm());
+      Serial.print("cm at ");
+      Serial.println(isotimestamp);
 
-    Serial.print("taken ");
-    Serial.print(iterCount);
-    Serial.print("/");
-    Serial.print(LOOP_LIMIT);
-    Serial.println(" measurements until next send");
+      Serial.print("taken ");
+      Serial.print(iterCount);
+      Serial.print("/");
+      Serial.print(LOOP_LIMIT);
+      Serial.println(" measurements until next send");
+    }
   }
 
   if (canSend) {
@@ -220,8 +231,10 @@ void sendData(String isotimestamp) {
     String jsonString = JSON.stringify(myData);
 
     if (DONT_SEND_DATA) {
-      Serial.println("NOT ACTUALLY SENDING JSON:");
-      Serial.println(jsonString);
+      if (DEBUG) {
+        Serial.println("NOT ACTUALLY SENDING JSON:");
+        Serial.println(jsonString);
+      }
     } else {
       // setup connection
       auto client = std::make_unique<BearSSL::WiFiClientSecure>();
@@ -233,8 +246,10 @@ void sendData(String isotimestamp) {
       https.addHeader("Content-Type", "application/json");
       
       // Send HTTP POST request
-      Serial.println("Sending data:");
-      Serial.println(jsonString);
+      // if(DEBUG) {
+        Serial.println("Sending data:");
+        Serial.println(jsonString);
+      // }
       int httpResponseCode = https.POST(jsonString);
       
       if (httpResponseCode > 0) {
