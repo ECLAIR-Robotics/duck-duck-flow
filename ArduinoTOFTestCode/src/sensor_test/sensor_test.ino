@@ -8,8 +8,8 @@
  */
 
 #define DEBUG 0  // print out debug statements
-#define DONT_SEND_DATA 1 // whether data should be sent to the database
-#define PRINT_EVERY_MEASUREMENT 1 // whether to print every sucessful measurement (in cm)
+#define SEND_DATA 1 // whether data should be sent to the database
+#define PRINT_EVERY_MEASUREMENT 0 // whether to print every sucessful measurement (in cm)
 
 #include <Arduino_JSON.h>
 #include <SoftwareSerial.h>
