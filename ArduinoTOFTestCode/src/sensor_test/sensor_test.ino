@@ -31,7 +31,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000); // UTC time, update ever
 // loop variables
 #define SENSOR_DELAY 150      // in miliseconds. don't make it too high or the sensor won't work
 #define DATA_SEND_PERIOD 5   // sensor will send data every DATA_SEND_PERIOD seconds
-#define DATA_SEND_PERIOD_SCALE 0.4348 // must scale DATA_SEND_PERIOD because testing shows it's slower
+#define DATA_SEND_PERIOD_SCALE 0.3106 // magic number found from testing. must scale DATA_SEND_PERIOD because testing shows it's slower
 static int loop_limit = 1 + ((DATA_SEND_PERIOD * DATA_SEND_PERIOD_SCALE)/(SENSOR_DELAY/ 1000.0));   // the number of loops to take the measurement average over. 
 static int iterCount = 0;     // which iteration of the loop we're on, will be reset after sending data
 static int goodIterCount = 0; // number of successful runs, for taking average
