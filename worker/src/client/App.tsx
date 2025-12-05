@@ -3,11 +3,20 @@ import { ApiResponse, SensorData } from '../types';
 import DataTable from '../components/DataTable';
 import { SensorLocation } from '../components/map/types';
 import SSRMap from '../components/map/Maps.lazy';
+import { useQuery } from '../hooks/query/useQuery';
+
+
+const fetchData = async (): Promise<SensorData[] | undefined> => 
+    fetch('/api/data', { method: 'GET' })
+    .then((res: Response): Promise<ApiResponse<SensorData[]>> => res.json())
+    .then((json: ApiResponse<SensorData[]>) => {
+      const { body } = json;
+      return body;
+    })
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [data, setData] = useState<SensorData[] | undefined>();
+  const [resMessage, setMessage] = useState('');
 
   const testLog = async () => {
     setIsLoading(true);
@@ -45,31 +54,14 @@ const App: React.FC = () => {
     }
   };
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    fetch('/api/data', {
-      method: 'GET',
-    })
-    .then((res: Response): Promise<ApiResponse<SensorData[]>> => res.json())
-    .then((json: ApiResponse<SensorData[]>) => {
-      const { body } = json;
-      setData(body);
-    }).catch((err) => {
-      console.log(`Error fetching data: ${err}`)
-      setMessage('❌ Error fetching data')
-    })
-    setIsLoading(false);
-  }
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+  const {data, loading, error, message} = useQuery<SensorData[]>(fetchData);
 
   return (
     <div className="container">
       <div className="emoji">🦆</div>
       <h1>Duck Duck Flow</h1>
-      <p>Welcome to Duck Duck Floor - a React app with SSR powered by Cloudflare Workers!</p>
+      <p>Welcome to Duck Duck Flow - a React app with SSR powered by Cloudflare Workers!</p>
       <button 
         className="button" 
         onClick={testLog}
@@ -83,7 +75,7 @@ const App: React.FC = () => {
         onClick={fetchData}
         disabled={isLoading}
       >
-        {isLoading ? 'Fetching...' : 'Fetch Data'}
+        {loading ? 'Fetching...' : 'Fetch Data'}
       </button>
       {data && <DataTable data={data} />}
       {message && (
