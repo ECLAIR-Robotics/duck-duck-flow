@@ -31,8 +31,11 @@ const SensorPage = () => {
     }
 
     return (
-        <div>
-            {data?.comment}
+        <div className="container">
+            <h1>Data for Sensor {data?.id}</h1>
+            <p>In the future, this will show the most recent mesurements from just this sensor </p>
+            {/* {data?.comment}
+            <p>debug: {JSON.stringify(data)}</p> */}
         </div>
     )
 }
