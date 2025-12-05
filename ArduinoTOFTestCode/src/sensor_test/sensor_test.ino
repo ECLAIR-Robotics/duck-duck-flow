@@ -1,13 +1,13 @@
 // sensor_test.ino debug version
-// 10-20-2025
+// 12-4-2025
 // test program for ultrasonic sensor to print out values. originally compiled and run in arduino IDE
 /**
  * The ultrasonicsensor will take an average of distance measurements in cm 
- * over 30 seconds (see LOOP_LIMIT), then send the data to the DuckDuckFlow 
+ * over 10 seconds (see DATA_SEND_PERIOD), then send the data to the DuckDuckFlow 
  * testing database.
  */
 
-#define DEBUG 0  // print out debug statements
+#define DEBUG 1  // print out debug statements
 #define SEND_DATA 1 // whether data should be sent to the database
 #define PRINT_EVERY_MEASUREMENT 0 // whether to print every sucessful measurement (in cm)
 
@@ -29,12 +29,14 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000); // UTC time, update every 60 seconds
 
 // loop variables
-#define SENSOR_DELAY 150      // don't make it too high or the sensor won't work
-#define LOOP_LIMIT 30         // the number of loops to take the measurement average over. LOOP_LIMIT * SENSOR_DELAY should be around 30,000 = 30 seconds
+#define SENSOR_DELAY 150      // in miliseconds. don't make it too high or the sensor won't work
+#define DATA_SEND_PERIOD 5   // sensor will send data every DATA_SEND_PERIOD seconds
+#define DATA_SEND_PERIOD_SCALE 0.4348 // must scale DATA_SEND_PERIOD because testing shows it's slower
+static int loop_limit = 1 + ((DATA_SEND_PERIOD * DATA_SEND_PERIOD_SCALE)/(SENSOR_DELAY/ 1000.0));   // the number of loops to take the measurement average over. 
 static int iterCount = 0;     // which iteration of the loop we're on, will be reset after sending data
-static int goodIterCount = 0;     // number of successful runs, for taking average
-static float runningSum = 0;  // running sum, divide by LOOP_LIMIT to get average
-static bool canSend = false;  // whether we can send data or not yet, every LOOP_LIMIT-th iteration
+static int goodIterCount = 0; // number of successful runs, for taking average
+static float runningSum = 0;  // running sum, divide by loop_limit to get average
+static bool canSend = false;  // whether we can send data or not yet, every loop_limit-th iteration
 
 // connection variables (logging)
 const String path = "https://tanayhome.org/log";
@@ -52,15 +54,7 @@ void setup() {
   Serial.begin(9600);     // match ESP8266's baud rate
 
   delay(5000);
-  // print constants
-  if (DEBUG) {
-    Serial.println("DEBUG mode is ON!");
-  } else {
-    Serial.println("Debug mode is off");
-  }
-  if (DONT_SEND_DATA) {
-    Serial.println("DONT_SEND_DATA is TRUE. Data will NOT be sent to the database!");
-  }
+  printSetupSettings();
 
   // Connect to network
   WiFi.begin(ssid, password);
@@ -179,8 +173,8 @@ float getDistance() {
 
 /** sends data if certain conditions are met */
 void attemptSendData(String isotimestamp) {
-  // send data every LOOP_LIMIT iterations. have a flag since the next few loops might fail.
-  if (!canSend && ++iterCount > LOOP_LIMIT) {
+  // send data every loop_limit iterations. have a flag since the next few loops might fail.
+  if (!canSend && ++iterCount > loop_limit) {
     canSend = true; 
     if (DEBUG)
       Serial.println("Reached required loops, can send data now!");
@@ -195,7 +189,7 @@ void attemptSendData(String isotimestamp) {
       Serial.print("taken ");
       Serial.print(iterCount);
       Serial.print("/");
-      Serial.print(LOOP_LIMIT);
+      Serial.print(loop_limit);
       Serial.println(" measurements until next send");
     }
   }
@@ -220,17 +214,17 @@ void sendData(String isotimestamp) {
     // Create JSON object
     JSONVar myData;
     myData["water_height"] = average;
-    myData["latitude"] = 40.786;
-    myData["longitude"] = -74.006;
-    myData["timestamp"] = isotimestamp;  // "2025-10-06T19:03:08.000Z";
+    myData["latitude"] = 30.283172592999357;
+    myData["longitude"] = -97.73431521085475;
+    myData["timestamp"] = isotimestamp;
     myData["sensor_altitude"] = 0.5;
-    myData["comment"] = "Test from ESP testing timestamp";
-    myData["sensor_id"] = 69;
+    myData["comment"] = "test1";
+    myData["sensor_id"] = 1;
     
     // Serialize to JSON string
     String jsonString = JSON.stringify(myData);
 
-    if (DONT_SEND_DATA) {
+    if (!SEND_DATA) {
       if (DEBUG) {
         Serial.println("NOT ACTUALLY SENDING JSON:");
         Serial.println(jsonString);
@@ -246,10 +240,11 @@ void sendData(String isotimestamp) {
       https.addHeader("Content-Type", "application/json");
       
       // Send HTTP POST request
-      // if(DEBUG) {
+      if (DEBUG) {
         Serial.println("Sending data:");
         Serial.println(jsonString);
-      // }
+      }
+
       int httpResponseCode = https.POST(jsonString);
       
       if (httpResponseCode > 0) {
@@ -270,3 +265,20 @@ void sendData(String isotimestamp) {
     Serial.println("WiFi Disconnected");
   }
 } 
+
+/* prints various constants, i.e. the settings for this program */
+void printSetupSettings() {
+  // print constants
+  if (DEBUG) {
+    Serial.println("DEBUG mode is ON!");
+  } else {
+    Serial.println("DEBUG mode is off");
+  }
+  if (!SEND_DATA) {
+    Serial.println("SEND_DATA is FALSE. Data will NOT be sent to the database!");
+  }
+  Serial.print("Sending data every ");
+  Serial.print(DATA_SEND_PERIOD);
+  Serial.print(" seconds. loop limit= ");
+  Serial.println(loop_limit);
+}
