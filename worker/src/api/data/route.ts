@@ -57,12 +57,12 @@ const getData = async (request: Request, env: Env) => {
 
 const getDataById = async (request: Request, env: Env, id: string) => {
     try {
-        const dataQueryResult: D1Result | undefined = await env.flow_records.prepare(`SELECT * FROM sensor_data WHERE sensor_id = ${id} ORDER BY datetime(timestamp) DESC LIMIT 1`).run();
+        const dataQueryResult: D1Result | undefined = await env.flow_records.prepare(`SELECT * FROM sensor_data WHERE sensor_id = ${id} ORDER BY datetime(timestamp) DESC LIMIT 10`).run();
 
         return new Response(JSON.stringify({ 
             success: true, 
             message: 'Data fetched successfully',
-            body: dataQueryResult?.results[0],
+            body: dataQueryResult?.results,
         }), {
             status: 200,
             headers: {

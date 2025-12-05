@@ -3,7 +3,7 @@ import { ApiResponse, SensorData } from '../types';
 import DataTable from '../components/DataTable';
 import { SensorLocation } from '../components/map/types';
 import SSRMap from '../components/map/Maps.lazy';
-import duck from '/duck.png';
+// import duck from '/duck.png';
 import { useQuery } from '../hooks/query/useQuery';
 
 
@@ -61,7 +61,7 @@ const App: React.FC = () => {
   return (
     <div className="container">
       {/* <div className="emoji">🦆</div> */}
-      <img src={duck} alt="duck logo" style={{ maxHeight: '20vh' }} />
+      {/* <img src={duck} alt="duck logo" style={{ maxHeight: '20vh' }} /> */}
       <h1>Duck Duck Flow</h1>
       <p className="welcomemsg">Welcome to Duck Duck Flow - a flood sensing system!</p>
 
