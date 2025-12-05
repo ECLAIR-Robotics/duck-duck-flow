@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useQuery } from "../../hooks/query/useQuery";
 import { ApiResponse, SensorData } from "../../types";
 import DataTable from "../DataTable";
@@ -36,6 +36,7 @@ const SensorPage = () => {
             {/* TODO fix query typing so that data is ensured to be defined here */}
             <h1>Sensor {data![0].sensor_id}</h1>
             <DataTable data={data!}/>
+            <Link to="/">Home</Link>
         </div>
     )
 }
