@@ -13,6 +13,7 @@
 
 import './types';
 import { render } from './client/entry-server';
+import { fulfillDataRequest } from './api/data/route';
 
 	
 
@@ -20,6 +21,7 @@ export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
 		const path = url.pathname;
+		console.log(path)
 
 		// Handle POST requests to /log endpoint
 		if (path === '/api/log' && request.method === 'POST') {
@@ -78,38 +80,10 @@ export default {
 		}
 
 		// Handle GET request to /data endpoint
-		if (path === '/api/data' && request.method === 'GET') {
-			try {
-				const body = await request.text();
-				const dataQueryResult: D1Result | undefined = await env.flow_records.prepare("SELECT * FROM sensor_data ORDER BY datetime(timestamp) DESC LIMIT 10").run();
-
-				return new Response(JSON.stringify({ 
-					success: true, 
-					message: 'Data fetched successfully',
-					// timestamp: new Date().toISOString(),
-					body: dataQueryResult?.results,
-				}), {
-					status: 200,
-					headers: {
-						'Content-Type': 'application/json',
-						'Access-Control-Allow-Origin': '*',
-						'Access-Control-Allow-Methods': 'GET, OPTIONS',
-						'Access-Control-Allow-Headers': 'Content-Type',
-					},
-				});
-			} catch (error) {
-				console.error('Error processing log:', error);
-				return new Response(JSON.stringify({ 
-					success: false, 
-					error: 'Failed to fetch sensor data' 
-				}), {
-					status: 500,
-					headers: {
-						'Content-Type': 'application/json',
-						'Access-Control-Allow-Origin': '*',
-					},
-				});
-			}
+		console.log(path.includes('/api/data'))
+		console.log()
+		if (path.includes('/api/data') && request.method === 'GET') {
+			return fulfillDataRequest(request, env);
 		}
 
 		// Handle CORS preflight requests

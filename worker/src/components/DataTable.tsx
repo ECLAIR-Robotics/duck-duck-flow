@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { SensorData } from "../types";
 
 type DataTableProps = {
@@ -23,7 +24,7 @@ const DataTable = (props: DataTableProps) => {
           {props.data.map((datapoint) => {
             return (
             <tr>
-              <td scope='row'>{datapoint.sensor_id}</td>
+              <td scope='row'><Link to={`/id/${datapoint.sensor_id}`}>{datapoint.sensor_id}</Link></td>
               <td>{datapoint.water_height}</td>
               <td>{readableDate(datapoint.timestamp)}</td>
               <td>{datapoint.comment}</td>

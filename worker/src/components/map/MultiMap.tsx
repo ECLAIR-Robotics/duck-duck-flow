@@ -1,5 +1,6 @@
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
 import { MultiMapProps, SensorLocation } from "./types";
+import { Link } from "react-router";
 
 // Displays Multiple Markers
 const MultiMap = (props: MultiMapProps) => {
@@ -16,7 +17,7 @@ const MultiMap = (props: MultiMapProps) => {
             {props.sensors && props.sensors.map((sensor: SensorLocation) => 
                 <Marker position={[sensor.coordinates.latitude, sensor.coordinates.longitude]}>
                     <Popup>
-                        ID: {sensor.sensor_id} <br/> Lat: {sensor.coordinates.latitude} <br/> Lon: {sensor.coordinates.longitude}
+                        ID: <Link to={`/id/${sensor.sensor_id}`}>{sensor.sensor_id}</Link> <br/> Lat: {sensor.coordinates.latitude} <br/> Lon: {sensor.coordinates.longitude}
                     </Popup>
                 </Marker>
             )}
